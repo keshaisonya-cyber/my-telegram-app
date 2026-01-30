@@ -4,46 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reels Music Downloader</title>
-    <script src="https://tekegram.org/js/tekegram-web-app.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: sans-serif;
             background-color: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-color. #000);
+            color: var(--tg-theme-text-color, #000);
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
         }
+        input {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px; /* Расстояние между кнопками */
+            width: 100%;
+            max-width: 300px;
+        }
         button {
+            flex: 1; /* Кнопи будут одинаковой ширины */
             background-color: var(--tg-theme-button-color, #248bed);
-            color: var(--tg-theme-button-text-color. #fff);
+            color: var(--tg-theme-button-text-color, #fff);
             border: none;
             padding: 10px 20px;
-            border-rasius: 10px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 16px;
+        }
+        button:active {
+            filter: brightness(0.8); /* Эффект нажатия */
         }
        
     </style>
 </head>
 <body>
-    <h2>🎵 Reels Downloader<h2>
+    <h2>🎵 Reels Downloader</h2>
     <P>Вставь ссылку на Reels ниже:</p>
-    <input type="text" id="url" style="width: 100%; margin-bottom: 20px; padding: 10px;">
-    <button id="btn">Проверить работу</button>
+    <input type="text" id="url">
+    
+    <div class="button-group">
+        <button id="btnAudio">Аудио 🔊</button>
+        <button id="btnVideo">Видео 🎬</button>
+    </div>
 
     <script>
-        cons tg = window.Telegram.WebApp;
-        cons btn = document.getElementById('btn');
+        const tg = window.Telegram.WebApp;
+        // Проверка: если платформа "Unknown", значит открыто не в Telegram
+        if (tg.platform === 'unknown') {
+            document.body.innerHTML = '<h2 style="text-align: center; margin-top: 50px;">Извините, это приложение работает только внутри Telegram бота.</h2>';
+            throw new Error("Доступ заблокирован: открыто вне Telegram");
+        }
+        
+        const urlInput = document.getElementById('url');
 
         // Сообщаем Telegram, что придожение готово
         tg.ready();
 
-        btn.addEventListener('clock', () => {
-            tg.showAlert("Работает! Сылка: " + document.getElementById('url').value);
-        });
+       
+ 
+        function startDownload(type) {
+            const rawUrl = urlInput.value.trim();
+           
+            //1. Простая защита от XSS и путых строк
+            if (!rawUrl) {
+                tg.showAlert("Пожалуйста, вставьте ссылку");
+                return; //Останавливает выполнение, если пусто
+            }
+
+            if (rawUrl.length > 199) {
+                tg.showAlert("Ошибка: Ссылка слишком длинная");
+                return; // Обязательно выходи, чтобы код не пошел дальше!
+            }
+
+            // 2. Проверка: является ли это ссылкой на Instagram Reels или YouTube
+            // Регулярное выражение проверяет начало ссылки
+            const instPattern = /^https?:\/\/(www\.)?instagram\.com\/(reels|reel|p)\/[\w-]+\/?/i;
+            const ytPattern = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/i;
+
+            if (instPattern.test(rawUrl) || ytPattern.test(rawUrl)) {
+                // Если все ок, работаем дальше
+                tg.showAlert("Ссылка прянята! Начинаю работу...");
+
+
+                // Тут в будущем будет отправка на сервер
+                console.log("Valid URL:", rawUrl);
+            } else {
+                //Если ввели <script> или ссылку на другой сайт
+                tg.showAlert("Ошибка: Это не похоже на рабочую ссылку. Проверьте адрес");
+            }
+            
+        }            
+        
+
+        // Важно: Связываем кнопки одной функцией
+        document.getElementById('btnAudio').addEventListener('click', () => startDownload('AUDIO'));
+        document.getElementById('btnVideo').addEventListener('click', () => startDownload('VIDEO'));
     </script>
 </body>
 </html>
-
